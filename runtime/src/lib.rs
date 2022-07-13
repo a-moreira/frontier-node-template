@@ -45,6 +45,12 @@ pub use frame_support::{
 	},
 	ConsensusEngineId, StorageValue,
 };
+
+#[cfg(feature = "with-paritydb-weights")]
+use frame_support::weights::constants::ParityDbWeight as RuntimeDbWeight;
+#[cfg(feature = "with-rocksdb-weights")]
+use frame_support::weights::constants::RocksDbWeight as RuntimeDbWeight;
+
 pub use pallet_balances::Call as BalancesCall;
 use pallet_ethereum::{Call::transact, Transaction as EthereumTransaction};
 use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, GasWeightMapping, HashedAddressMapping, Runner};
@@ -184,7 +190,7 @@ impl frame_system::Config for Runtime {
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
+	type DbWeight = RuntimeDbWeight;
 	/// Version of the runtime.
 	type Version = Version;
 	/// Converts a module to the index of the module in `construct_runtime!`.
@@ -277,6 +283,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
 	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
@@ -390,7 +397,7 @@ construct_runtime!(
 		Aura: pallet_aura::{Pallet, Config<T>},
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
@@ -662,7 +669,7 @@ impl_runtime_apis! {
 				is_transactional,
 				validate,
 				evm_config,
-			).map_err(|err| err.into())
+			).map_err(|err| err.error.into())
 		}
 
 		fn create(
@@ -699,7 +706,7 @@ impl_runtime_apis! {
 				is_transactional,
 				validate,
 				evm_config,
-			).map_err(|err| err.into())
+			).map_err(|err| err.error.into())
 		}
 
 		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {

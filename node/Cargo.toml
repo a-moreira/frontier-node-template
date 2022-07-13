@@ -24,6 +24,7 @@ default = ['aura']
 manual-seal = ['frontier-template-runtime/manual-seal']
 rpc_binary_search_estimate = ['fc-rpc/rpc_binary_search_estimate']
 runtime-benchmarks = ['frontier-template-runtime/runtime-benchmarks']
+with-rocksdb-weights = ['frontier-template-runtime/with-rocksdb-weights']
 
 [dependencies]
 async-trait = '0.1'
